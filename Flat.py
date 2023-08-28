@@ -4,11 +4,11 @@ from astropy.io import fits
 import os
 from astropy.stats import sigma_clip
 
-#flats dictionary (4s)
-directory = r"C:\Users\aysan\Desktop\university\Asto Lab\Aznaveh data\flat\flat fits"
+#flats dictionary
+directory = r"flat FITS address"
 
-# get relevant masterdark (4s)
-masterdark = fits.open(r"C:\Users\aysan\Desktop\university\Asto Lab\Aznaveh data\flat\4s masterdark.fits")
+# get relevant masterdark
+masterdark = fits.open(r"co-responding masterdark address")
 dark_data = masterdark[0].data
 
 #import flat images from dictionary and save as grey scale data minus masterdark
@@ -20,8 +20,11 @@ for filename in os.listdir(directory):
         file = fits.open(filepath)
         # Get the data from the first extension
         data = file[0].data
-        # Summing over 3 channels to get grey scale data, subtract masterdark 
+        # Summing over 3 channels to get grey scale data, subtract masterdark
+        #if you have a specific filter on your images, simply adding the channels will suffice.
         grey_minus_dark = data[0,:,:]+data[1,:,:]+data[2,:,:] - dark_data
+        #if not, use this ratio instead : [0.2989, 0.5870, 0.1140]
+        #grey_minus_dark = np.dot(data.T, [0.2989, 0.5870, 0.1140]) - dark_data
         grey_data_minus_dark.append(grey_minus_dark)
 
 #sigma clip stacked images
