@@ -1,10 +1,10 @@
-#this code was written by Aysan Hemmati
+#The following file provides a masterdark FITS file.
 import numpy as np
 from astropy.io import fits
 import os
 from astropy.stats import sigma_clip
 
-directory = r"C:\Users\aysan\Desktop/university\Asto Lab\Aznaveh data\dark\30s fits"
+directory = r"Adress to the raw dark fits files"
 
 grey_data = []
 
@@ -17,8 +17,12 @@ for filename in os.listdir(directory):
         file = fits.open(filepath)
         # Get the data from the first extension
         data = file[0].data
-        # Summing over 3 channels
+        
+        # Summing over 3 channels, if you have a specific filter on your images, simply adding the channels will suffice.
         grey_scale = data[0,:,:]+data[1,:,:]+data[2,:,:]
+        #if not, use this ratio instead : [0.2989, 0.5870, 0.1140]
+        # grayscale = np.dot(data.T, [0.2989, 0.5870, 0.1140])
+        
         grey_data.append(grey_scale)
 
 #get the grey data as a stacked image and sigmaclip the data
@@ -30,4 +34,4 @@ median =np.array(np.median(data_clipped,axis=0))
 # get masterdark as a fits file
 hdu = fits.PrimaryHDU(median)
 hdulist = fits.HDUList([hdu])
-hdu.writeto('30s masterdark.fits')
+hdu.writeto('masterdark name.fits')
