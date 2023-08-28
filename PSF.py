@@ -1,22 +1,16 @@
-# code was written by Aysan Hemmati
+# the following code returns mean PSF of an image and radial profiles for stars.
 
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
-from astropy.nddata import Cutout2D
-from astropy import units as u
 from scipy import ndimage
-from photutils.profiles import RadialProfile
 from scipy.optimize import curve_fit
 
+# open fits file
 stars_fits = fits.open(r"stars .fits")
 data = stars_fits[0].data
-#info = stars_fits.info()
-# show the fits file:
-#plt.figure()
-#plt.imshow(data, cmap='gray')
-#plt.colorbar()
-#plt.show() #Figure 1'
+
+# give star coordinates
 coordiantes = ((1593,1225),(1680,1263),(1238,1295),(1223,1495),(420,1370),(1350,1608),(1703,1783),(1770,1823),(1795,1903),(1923,1420),(62,1440),(732,205),(432,487),(1655,667),(1966,455),(465,602),(290,710),(1610,115),(1563,345),(1610,112))
 
 stars = []
