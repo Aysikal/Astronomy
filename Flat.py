@@ -1,4 +1,4 @@
-#This code was written by Aysan Hemmati
+#The following file provides a masterflat and gain table FITS file.
 import numpy as np
 from astropy.io import fits
 import os
