@@ -1,4 +1,4 @@
-
+# The following code calculates absorption data by fitting a weighted line to the data.
 import numpy as np
 from astropy.io import fits
 import os
@@ -11,13 +11,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
   
+#Choose a star that appears in all of the images, using Starry night check wether the chosen star is a variable star or not. do not choose a variable star.
 
-#this code was written by Aysan Hemmati
-
-#The chosen star is HIP10641, magnitude is measured at roughly 5 minute intervals
-
-#importing dark and flat corrected fits images (20s)
-directory = r"C:\Users\aysan\Desktop\university\Asto Lab\Aznaveh data\absorption data 1"
+#importing dark and flat corrected fits images
+directory = r"Address to your images"
 images = []
 for filename in os.listdir(directory):
         filepath = os.path.join(directory, filename)
@@ -28,7 +25,7 @@ for filename in os.listdir(directory):
         grey_data = data[0,:,:]+data[1,:,:]+data[2,:,:]
         images.append(grey_data)
 
-#location of HIP10641 in each image
+#location of your chosen star; for example:
 star_x = [ 3064, 3144, 3174, 3254, 3284, 3723 ,3429, 3463, 3493, 3553, 3566, 3616, 3633, 3700]
 star_y = [ 1437, 1477, 1527, 1573, 1639, 1410 , 801, 825, 871, 928, 392, 442, 495, 562]
 
@@ -36,9 +33,6 @@ star_y = [ 1437, 1477, 1527, 1573, 1639, 1410 , 801, 825, 871, 928, 392, 442, 49
 def apparent_magnitude(star_flux):
     magnitude =  - 2.5 * np.log10(star_flux)
     return magnitude
-
-#function was written by Mitra Maleki in the pervious reports
-
 
 def find_optimal_flux(image_data, x, y, max_aperture_radius=16, step_size=0.5):
     y, x = int(round(y)), int(round(x))
@@ -55,7 +49,6 @@ def find_optimal_flux(image_data, x, y, max_aperture_radius=16, step_size=0.5):
         phot_table = aperture_photometry(image_data, aperture)
         flux = phot_table['aperture_sum'][0]
        
-
         # Calculate the noise and SNR for the current aperture
         gain = 1.0
         readnoise = 1.0
@@ -79,7 +72,6 @@ def find_optimal_flux(image_data, x, y, max_aperture_radius=16, step_size=0.5):
         aperture_snr.append(snr)
         aperture_radii.append(aperture_radius)
 
-       
         if snr > best_snr:
             best_snr = snr
             best_flux = total_flux
@@ -118,17 +110,16 @@ def flux(image_data, x, y, radius=12.5):
     # Update the best aperture if the current SNR is higher
     return best_flux
 
-
 def calculate_error(star_flux, gain, readnoise, n_pixels):
     noise = np.sqrt(star_flux * gain + n_pixels * readnoise ** 2)
     snr = star_flux * gain / noise
     error = 1.08 / snr
     return error, snr
 
-# finding HIP10641 in each image and saving it as a cutout 
+# finding chosen star in each image and saving it as a cutout 
 centers = []
 stars = []
-for i in range(0,14):
+for i in range(0,len(images):
         image = images[i]
         star = image[star_y[i]-30 : star_y[i]+30 , star_x[i]-30 : star_x[i]+30]
         stars.append(star)
@@ -141,15 +132,15 @@ for i in range(0,14):
         #plt.show()
 
 apertures = []
-# get the best radii from each image:
+get the best radii from each image:
 
-#for i in range(0,len(images)):
-   ## center = centers[i]
-    #best_flux , best_aperture = find_optimal_flux(stars[i], center[1], center[0] )
-    #best_flux.append(best_flux)
-    #apertures.append(best_aperture)
+for i in range(0,len(images)):
+    center = centers[i]
+    best_flux , best_aperture = find_optimal_flux(stars[i], center[1], center[0] )
+    best_flux.append(best_flux)
+    apertures.append(best_aperture)
 
-#plot snr with respect to r:
+plot snr with respect to r:
 center = centers[13]
 r = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16]
 flux1 , best_aperture , aperture_radii, snr = find_optimal_flux(stars[13], center[1], center[0])
@@ -171,7 +162,7 @@ star_flux = []
 magnitudes = []
 errors = []
 SNRs = []
-for i in range(0,14):
+for i in range(0,len(images)):
     center = centers[i]
     best_flux = flux(stars[i], center[1], center[0] )
     star_flux.append(best_flux)
@@ -181,16 +172,13 @@ for i in range(0,14):
     SNRs.append(snr)
     errors.append(errors)
     
-# get star altitudes for each image from starrynight
+# get star altitudes for each image from starrynight; for example:
 z = [58.47883333, 57.82233333, 57.16266667, 56.50016667, 55.66666667, 54.865, 52.43833333, 51.76, 51.07966667, 50.3965, 49.71416667,49.03333333, 48.33, 47.6433333]
 sec_z = []
-for i in range(0,14):
+for i in range(0,len(images)):
      rad = z[i]*(np.pi / 180)
      secz = 1/np.cos(rad)
      sec_z.append(secz)
-
-magnitudes = [-13.527762578199379, -13.49724703308431, -13.559306656977057, -13.60599829205842, -13.545780396744785, -13.681205928385804, -13.895880719409153, -13.951512886375186, -13.7775260454727, -13.935651355071247, -13.972373088242936, -13.889584333117996, -13.964779554823759, -14.02697317111356]
-minimum_mag = -14.02697317111356
 
 # differential magnitudes
 differential_mag = magnitudes.copy()
@@ -203,7 +191,7 @@ for i in range (0,14):
 # error bar for each point is error = 1.0875/snr.
 # errors are used as weights to get a weighted line fit.
 y_error = []
-for i in range (0,14):
+for i in range(0,len(images)):
      err = 1.0875/SNRs[i]
      y_error.append(err)
 
@@ -220,7 +208,7 @@ yfit = func(x, *popt)
 print('Weighted fit parameters:', popt)
 cov_error = np.sqrt(np.diag(pcov))
 print('Covariant errors:',cov_error)
-#print('Covariance matrix:'); print(pcov)
+print('Covariance matrix:'); print(pcov)
 plt.xlabel("sec z")
 plt.ylabel("differential magnitude")
 plt.errorbar(x, differential_mag, yerr = y_error ,fmt='none',ecolor = 'blue',color='yellow') 
@@ -229,7 +217,7 @@ plt.plot(x, yfit, label='Weighted fit (WLS)')
 # plotting the data:
 plt.plot(x, differential_mag, '.')
 plt.legend(loc='lower center')
-#plt.show()
+plt.show()
 
 #data table:
 d = {'z': np.array(z), 'sec_z': np.array(sec_z), 'instrumental magnitude': np.array(magnitudes), 'differential mag' : np.array(differential_mag), 'magnitude error': y_error,'SNR' : np.array(SNRs)}
