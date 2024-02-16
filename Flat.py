@@ -3,48 +3,68 @@ import numpy as np
 from astropy.io import fits
 import os
 from astropy.stats import sigma_clip
+import matplotlib.pyplot as plt
+import reza
+#flats directory
+directory = r"C:/Users\AYSAN\Desktop/test"
 
-#flats dictionary
-directory = r"flat FITS address"
+# get the relevant masterdark:
 
-# get relevant masterdark
-masterdark = fits.open(r"co-responding masterdark address")
-dark_data = masterdark[0].data
 
-#import flat images from dictionary and save as grey scale data minus masterdark
-grey_data_minus_dark = []
+number_of_flats = len(os.listdir(directory))
+flat = np.zeros((1024 , 1024) , dtype = float)
+flat_stds = np.zeros((number_of_flats), float)
+flat_meds = np.zeros((number_of_flats), float)
+flat_exps = np.zeros((number_of_flats), float)
+i = 0
 
-for filename in os.listdir(directory):
-        filepath = os.path.join(directory, filename)
+for file in os.listdir(directory):
+   filepath = os.path.join(directory, file)
         # Open the fits file
-        file = fits.open(filepath)
+   file = fits.open(filepath)
         # Get the data from the first extension
-        data = file[0].data
-        # Summing over 3 channels to get grey scale data, subtract masterdark
-        #if you have a specific filter on your images, simply adding the channels will suffice.
-        grey_minus_dark = data[0,:,:]+data[1,:,:]+data[2,:,:] - dark_data
-        #if not, use this ratio instead : [0.2989, 0.5870, 0.1140]
-        #grey_minus_dark = np.dot(data.T, [0.2989, 0.5870, 0.1140]) - dark_data
-        grey_data_minus_dark.append(grey_minus_dark)
+   data = file[0].data
+   header = file[0].header
+   flat += file[0].data
+   flat_stds[i] = np.std(file[0].data)
+   flat_meds[i] = np.median(file[0].data)
+   flat_exps[i] = float(header['EXPTIME']) * 1e-5 # exposure in seconds
+   file.close()
 
-#sigma clip stacked images
-images = np.array(grey_data_minus_dark)
-stacked_images = np.stack(images)
-data_clipped = sigma_clip(stacked_images, sigma=3, cenfunc='median')
-
-#get masterflat by using median of the sigma clipped data
-masterflat = np.array(np.median(data_clipped,axis=0)) 
+master_flat = flat/(number_of_flats) 
+masterflat = reza.sigma_clip(master_flat,3 , 3)
 
 #get gain table by dividing masterflat by its median value
 gain_table = masterflat/np.median(masterflat)
 
-# get masterflat and gain table as fits files
+# get masterflat and gain table as fits files:
 
-hdu1 = fits.PrimaryHDU(gain_table)
-hdulist = fits.HDUList([hdu1])
-hdu1.writeto('gain_table.fits')
+flat_array = np.array(masterflat)
+gain_array = np.array(gain_table)
 
-hdu2 = fits.PrimaryHDU(masterflat)
-hdulist = fits.HDUList([hdu1])
-hdu2.writeto('masterflat.fits')
+plt.imshow(gain_array)
+plt.title("gaintable for red filter" )
+plt.colorbar()
+plt.show()
 
+plt.imshow(flat_array)
+plt.title("masterflat for green filter" )
+plt.colorbar()
+plt.show()
+
+#export masterflat and gaintable as fits files:
+# Define the output FITS file name
+output_filename1 = 'masterflat+color.fits'
+output_filename2 = 'gaintable+color.fits
+
+# Create a PrimaryHDU (header/data unit) from your array
+primary_hdu1 = fits.PrimaryHDU(data=flat_array)
+primary_hdu2 = fits.PrimaryHDU(data=gain_array)
+
+# Create an HDUList and append the PrimaryHDU
+hdul1 = fits.HDUList([primary_hdu1])
+hdul2 = fits.HDUList([primary_hdu2])
+
+# Write the HDUList to the FITS file
+hdul1.writeto(output_filename1, overwrite=True)
+hdul2.writeto(output_filename2, overwrite=True)
