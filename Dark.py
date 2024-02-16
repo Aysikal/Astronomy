@@ -1,37 +1,55 @@
 #The following file provides a masterdark FITS file.
 import numpy as np
+import matplotlib
 from astropy.io import fits
 import os
 from astropy.stats import sigma_clip
+import matplotlib.pyplot as plt
+import reza
+directory = "enter location to the dark files here"
 
-directory = r"Adress to the raw dark fits files"
+number_of_darks = len(os.listdir(directory))
+dark = np.zeros((1024 , 1024) , dtype = float)
+dark_stds = np.zeros((number_of_darks), float)
+dark_meds = np.zeros((number_of_darks), float)
+dark_exps = np.zeros((number_of_darks), float)
+i = 0
 
-grey_data = []
-
-#get the dark data from dictionary and save as grey scale data
-
-for filename in os.listdir(directory):
-        
-        filepath = os.path.join(directory, filename)
+for file in os.listdir(directory):
+   filepath = os.path.join(directory, file)
         # Open the fits file
-        file = fits.open(filepath)
+   file = fits.open(filepath)
         # Get the data from the first extension
-        data = file[0].data
-        
-        # Summing over 3 channels, if you have a specific filter on your images, simply adding the channels will suffice.
-        grey_scale = data[0,:,:]+data[1,:,:]+data[2,:,:]
-        #if not, use this ratio instead : [0.2989, 0.5870, 0.1140]
-        # grayscale = np.dot(data.T, [0.2989, 0.5870, 0.1140])
-        
-        grey_data.append(grey_scale)
+   data = file[0].data
+   header = file[0].header
+   dark += file[0].data
+   dark_stds[i] = np.std(file[0].data)
+   dark_meds[i] = np.median(file[0].data)
+   dark_exps[i] = float(header['EXPTIME']) * 1e-5 # exposure in seconds
+   file.close()
 
-#get the grey data as a stacked image and sigmaclip the data
-images = np.array(grey_data)
-stacked_images = np.stack(images)
-data_clipped = sigma_clip(stacked_images, sigma=3, cenfunc='median')
-median =np.array(np.median(data_clipped,axis=0)) 
+master_dark = dark/(number_of_darks) 
+masterdark = sigma_clip(master_dark, sigma=4, cenfunc='median')
 
-# get masterdark as a fits file
-hdu = fits.PrimaryHDU(median)
-hdulist = fits.HDUList([hdu])
-hdu.writeto('masterdark name.fits')
+#statistics of the master dark (mean, std, max, min):
+print(reza.statist(masterdark))
+#plot the histogram:
+plt.hist(masterdark)
+plt.show()
+#plot the masterdark array:
+plt.imshow(masterdark)
+plt.show()
+
+#export the master dark as a fits file:
+# Define the output FITS file name
+output_filename = 'masterdark+exptime.fits'
+
+# Create a PrimaryHDU (header/data unit) from your array
+primary_hdu = fits.PrimaryHDU(masterdark)
+
+# Create an HDUList and append the PrimaryHDU
+hdul = fits.HDUList([primary_hdu])
+
+# Write the HDUList to the FITS file
+hdul.writeto(output_filename, overwrite=True)
+
