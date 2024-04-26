@@ -1,3 +1,5 @@
+# this code calculates the extiction constant of the atmosphere at Iran National Observatory.
+
 import numpy as np
 from astropy.io import fits
 import os
@@ -425,4 +427,4 @@ for i in range (0 , len(alts_3)):
 
 
 extinction(star8magnitues , star8magnitues_3 , zenith_2 , zenith_3)
-#stars 6 and 8 are problematic 
+
